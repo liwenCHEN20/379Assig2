@@ -11,6 +11,8 @@ typedef struct {
 
 void handle_request(request *);
 
-int is_request_valid(char * request);
+int is_valid_request(char *);
+
+char * get_word (char *);
 
 #endif

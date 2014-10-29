@@ -16,9 +16,21 @@ void handle_request(request * req){
 
 	/*Lets try to print the request*/
 	read(req->requestSD, inbuffer, sizeof(inbuffer));
+
+
+#ifdef DEBUG
+
+if (is_valid_request(inbuffer)){
+	printf("******RECEIVED VALID REQUEST********\n");
 	printf("--------------Request----------\n");
 	printf("%s\n", inbuffer);
 	printf("-----------End Request-----------\n");		 
+} else {
+	printf("!!!!!!!!RECEIVED INVALID REQUEST!!!!!!\n");
+}
+
+#endif
+
 
 	/* the message we send the client */
 	strncpy(buffer,
@@ -36,4 +48,34 @@ void handle_request(request * req){
 		else
 			written += w;
 	}
+}
+
+int is_valid_request(char * req){
+	char * line;
+	char * tok;
+
+	//Get the first line
+	line = strtok(req, "\n");
+	printf("%s\n", line);
+
+	/*First word should be GET*/
+	tok = strtok(line, " ");
+	printf("%s\n", tok);
+	if (strcmp(tok, "GET") != 0){
+		return 0;
+	}
+
+	/*Second word should be a file*/
+	tok = strtok(NULL, " ");
+	printf("%s\n", tok);
+
+	/*Third should be HTTP..*/
+	tok = strtok(NULL, " ");
+	printf("%s\n", tok);
+
+	if (strncmp(tok, "HTTP/1.1", 8) != 0){
+		printf("Last token failed\n");
+		return 0;
+	}
+	return 1;
 }
