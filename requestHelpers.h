@@ -15,7 +15,11 @@ int is_valid_request(char **);
 
 int parse_request(char *, char **);
 
-int openFile(char *, char *);
+int open_file(char *, char *, FILE *);
+
+int read_file(int, char *, int);
+
+int send_file(int, char *, char *);
 
 int send_bad_request(int);
 
