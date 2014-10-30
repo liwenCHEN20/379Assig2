@@ -106,27 +106,33 @@ int open_file(char * docDIR, char * filePath, FILE * file){
 	/* now we attempt to open */
 	file = fopen(fullPath, "r");
 
-	if (file == NULL){
-		/* reduce the chance of race condition on 
-		 * errno by copying it
-		 */ 
-		return errno;
-	}
+	free(fullPath);
+
+	/* Reduce the chance of thread race
+	 * for errno by copying it. Still not perfect.
+	 */
+	return errno;
 }
 
-int read_file(int sd, char * buffer, int size){
-	int realSize = size;
-	int readSize = 0;
-	char * readBuffer[size];
+int read_file(FILE * fd, char * buffer){
+	long fileSize;
 
-	fseek(sd, 0, SEEK_END);
-	
+	fseek(fd, 0, SEEK_END);
+	fileSize = ftell(fd);
+	fseek(fd, 0, SEEK_SET);
+
+	buffer = (char *)malloc(fileSize + 1);
+	fread(buffer, 1, fileSize, fd);
+
+	return fileSize;
 }
 
 int send_file(int sd, char * docDIR, char * filePath){
 	int error;
-	char *buffer[BUFFSIZE];
+	char *buffer;
 	FILE * file; 
+	int responseSize;
+	char * response;
 	error = open_file(docDIR, filePath, file);
 	
 	/* catch errors */
@@ -145,7 +151,10 @@ int send_file(int sd, char * docDIR, char * filePath){
 		return;
 	}
 
+	/* read in the file */
 
+	responseSize = read_file(file, buffer);
+	get_good_response(responseSize, buffer, response);
 }
 
 /* THESE SHOULD ALL BE IN TEXT FILES NOT IN SOURCE 
@@ -202,4 +211,32 @@ Content‐Length: 131\n\
 I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
 </body></html>";
 	return send_text(sd, output);
+}
+
+char * get_good_response(int contentLen, char * content, char * fullOutput){
+	char * header;
+	char * lengthLine;
+	char * contentLine;
+	int totalLength;
+	int partialLength;
+
+	header = "HTTP/1.1 200 OK\n\
+Date: Mon 21 Jan 2008 18:06:16 GMT\n\
+Content-Type: text/html\n";
+
+	lengthLine = "Content-Length:";
+
+	partialLength = sprintf(NULL, "%s %d\n\n", lengthLine, contentLen);
+
+	contentLine = (char *)malloc(partialLength + 1);
+
+	sprintf(contentLine, "%s %d\n\n", lengthLine, contentLen);
+
+	fullOutput = (char *) malloc(strlen(contentLine) + 
+		strlen(header) + 
+		contentLen + 2);
+
+
+	sprintf(fullOutput, "%s%s%s", header, contentLine, content);
+	return fullOutput;
 }

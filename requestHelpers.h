@@ -17,7 +17,7 @@ int parse_request(char *, char **);
 
 int open_file(char *, char *, FILE *);
 
-int read_file(int, char *, int);
+int read_file(FILE *, char *);
 
 int send_file(int, char *, char *);
 
@@ -30,5 +30,7 @@ int send_permission_denied(int);
 int send_internal_service_error(int);
 
 int send_text(int, char *);
+
+char * get_good_response(int, char *, char *);
 
 #endif
