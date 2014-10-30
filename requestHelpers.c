@@ -7,6 +7,7 @@
 void handle_request(request * req){
 	char buffer[80];
 	char inbuffer[1024];
+	char * tokens[3];
 	ssize_t written, w;
 			/*
 			 * write the message to the client, being sure to
@@ -14,16 +15,18 @@ void handle_request(request * req){
 			 * a signal before we could write anything.
 			 */
 
-	/*Lets try to print the request*/
+
 	read(req->requestSD, inbuffer, sizeof(inbuffer));
+	parse_request(inbuffer, tokens);
 
 
 #ifdef DEBUG
-
-if (is_valid_request(inbuffer)){
+	
+	/*Lets try to print the request*/
+if (is_valid_request(tokens)){
 	printf("******RECEIVED VALID REQUEST********\n");
 	printf("--------------Request----------\n");
-	printf("%s\n", inbuffer);
+	printf("%s\n", tokens[1]);
 	printf("-----------End Request-----------\n");		 
 } else {
 	printf("!!!!!!!!RECEIVED INVALID REQUEST!!!!!!\n");
@@ -50,32 +53,42 @@ if (is_valid_request(inbuffer)){
 	}
 }
 
-int is_valid_request(char * req){
-	char * line;
-	char * tok;
 
-	//Get the first line
-	line = strtok(req, "\n");
-	printf("%s\n", line);
+int is_valid_request(char ** tokens){
 
-	/*First word should be GET*/
-	tok = strtok(line, " ");
-	printf("%s\n", tok);
-	if (strcmp(tok, "GET") != 0){
+	
+	if (strcmp(tokens[0], "GET") != 0){
 		return 0;
 	}
 
-	/*Second word should be a file*/
-	tok = strtok(NULL, " ");
-	printf("%s\n", tok);
-
-	/*Third should be HTTP..*/
-	tok = strtok(NULL, " ");
-	printf("%s\n", tok);
-
-	if (strncmp(tok, "HTTP/1.1", 8) != 0){
+	if (strcmp(tokens[2], "HTTP/1.1") != 0){
 		printf("Last token failed\n");
 		return 0;
 	}
 	return 1;
+}
+
+int parse_request(char * req, char **tokens){
+	char * line;
+	char * tok;
+
+	/*Get the first line*/
+	line = strtok(req, "\r");
+
+	/*Get firs token */
+	tok = strtok(line, " ");
+	tokens[0] = (char *)malloc(strlen(tok) + 1);
+	strcpy(tokens[0], tok);
+
+	/*Get second token*/
+	tok = strtok(NULL, " ");
+	tokens[1] = (char *)malloc(strlen(tok) + 1);
+	strcpy(tokens[1], tok);
+	
+	/* Get last token */
+	tok = strtok(NULL, " ");
+	tokens[2] = (char *)malloc(strlen(tok) + 1);
+	strcpy(tokens[2], tok);
+
+	return 3;
 }

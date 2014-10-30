@@ -11,8 +11,10 @@ typedef struct {
 
 void handle_request(request *);
 
-int is_valid_request(char *);
+int is_valid_request(char **);
 
-char * get_word (char *);
+int  parse_request(char *, char **);
+
+int clean_up_tokens_array(char **);
 
 #endif
