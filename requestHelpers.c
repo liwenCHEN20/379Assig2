@@ -18,10 +18,10 @@ void handle_request(request * req){
 
 	read(req->requestSD, inbuffer, sizeof(inbuffer));
 	parse_request(inbuffer, tokens);
-
+	send_bad_request(1);
 
 #ifdef DEBUG
-	
+
 	/*Lets try to print the request*/
 if (is_valid_request(tokens)){
 	printf("******RECEIVED VALID REQUEST********\n");
@@ -35,22 +35,7 @@ if (is_valid_request(tokens)){
 #endif
 
 
-	/* the message we send the client */
-	strncpy(buffer,
-	    "What is the air speed velocity of a coconut laden swallow?\n",
-	    sizeof(buffer));
-	w = 0;
-	written = 0;
-	while (written < strlen(buffer)) {
-		w = write(req->requestSD, buffer + written,
-		    strlen(buffer) - written);
-		if (w == -1) {
-			if (errno != EINTR)
-				err(1, "write failed");
-		}
-		else
-			written += w;
-	}
+	send_internal_service_error(req->requestSD);
 }
 
 
@@ -91,4 +76,75 @@ int parse_request(char * req, char **tokens){
 	strcpy(tokens[2], tok);
 
 	return 3;
+}
+
+int send_text(int sd, char * text){
+	ssize_t written, w;
+
+	w = 0;
+	written = 0;
+	while (written < strlen(text)) {
+		w = write(sd, text + written,
+		    strlen(text) - written);
+		if (w == -1) {
+			if (errno != EINTR)
+				err(1, "write failed");
+		}
+		else
+			written += w;
+	}
+}
+
+/* THESE SHOULD ALL BE IN TEXT FILES NOT IN SOURCE */
+
+int send_bad_request(int sd){
+	char * output = "HTTP/1.1 400 Bad Request\n\
+Date: Mon 21 Jan 2008 18:06:16 GMT\n\
+Content‐Type: text/html\n\
+Content‐Length: 107\n\
+\n\
+<html><body>\n\
+<h2>Malformed Request</h2>\n\
+Your browser sent a request I could not understand.\n\
+</body></html>";
+	send_text(sd, output);
+}
+
+int send_file_not_found(int sd){
+	char * output = "HTTP/1.1 404 Not Found\n\
+Date: Mon 21 Jan 2008 18:06:16 GMT\n\
+Content‐Type: text/html\n\
+Content‐Length: 117\n\
+\n\
+<html><body>\n\
+<h2>Document not found</h2>\n\
+You asked for a document that doesn't exist. That is so sad.\n\
+</body></html>";
+	send_text(sd, output);
+}
+
+int send_permission_denied(int sd){
+	char * output = "HTTP/1.1 403 Forbidden\n\
+Date: Mon 21 Jan 2008 18:06:16 GMT\n\
+Content‐Type: text/html\n\
+Content‐Length: 130\n\
+\n\
+<html><body>\n\
+<h2>Permission Denied</h2>\n\
+You asked for a document you are not permitted to see. It sucks to be you.\n\
+</body></html>";
+	send_text(sd, output);
+}
+
+int send_internal_service_error(int sd){
+char * output = "HTTP/1.1 500 Internal Server Error\n\
+Date: Mon 21 Jan 2008 18:06:16 GMT\n\
+Content‐Type: text/html\n\
+Content‐Length: 131\n\
+\n\
+<html><body>\n\
+<h2>Oops. That Didn't work</h2>\n\
+I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
+</body></html>";
+	send_text(sd, output);
 }

@@ -13,8 +13,18 @@ void handle_request(request *);
 
 int is_valid_request(char **);
 
-int  parse_request(char *, char **);
+int parse_request(char *, char **);
 
-int clean_up_tokens_array(char **);
+int openFile(char *, char *);
+
+int send_bad_request(int);
+
+int send_file_not_found(int);
+
+int send_permission_denied(int);
+
+int send_internal_service_error(int);
+
+int send_text(int, char *);
 
 #endif
