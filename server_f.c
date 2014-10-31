@@ -33,7 +33,7 @@ int main(int argc,  char *argv[])
 	memset(&inputs, 0, sizeof(serverInputs));
 
 	parseArgs(&inputs, argc, argv);
-
+	printf("started:\n");
 	/******* NEED TO INITIALIZE LOGGER STILL *****/
 	logg = init_logger(inputs.logPath);
 	printf("logger init: %s\n", logg->filepath);

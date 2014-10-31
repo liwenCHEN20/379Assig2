@@ -9,13 +9,11 @@
 #include <semaphore.h>
 #include "logHelper.h"
 
-#define MUTEXNAME logger_mutex
-
 static sem_t* mutex;
 
 logger* init_logger(char * file){
 	validate_log_path(file);
-	mutex = sem_open("MUTEXNAME5", O_CREAT, 0600, 1);
+	mutex = sem_open("logger_mutex", O_CREAT, 0600, 1);
 	logger* logStr = (logger*)malloc(sizeof(logger));
 	logStr->filepath = file;
 	printf("logger attached to: %s\n", file);
@@ -45,15 +43,13 @@ int is_valid_log_path(char *file){
 void write_log(logger * logWirter, char * req, char * clientAddr, char * resp){
 	//Implement the log writing
 	printf("waiting to enter mutex\n");
-	sem_t* sem = sem_open("MUTEXNAME5", O_RDWR);
+	sem_t* sem = sem_open("logger_mutex", O_RDWR);
 	sem_wait(sem);
-	printf("in mutex\n");
 	time_t t;
 	time(&t);
 
-	printf("attempt to open log file:\n");
 
-	FILE * file = fopen(logWirter->filepath, "r+");
+	FILE * file = fopen(logWirter->filepath, "a+");
 	if (file != NULL){
 		fprintf(file, "%s\t%s\t%s\t%s\n", ctime(&t), clientAddr, req, resp);
 		close(file);

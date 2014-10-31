@@ -183,6 +183,7 @@ int send_file(request * req, char * docDIR, char * filePath){
  */
 
 int send_bad_request(request * req){
+	int retValue;
 	char * output = "HTTP/1.1 400 Bad Request\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -192,10 +193,13 @@ Content‐Length: 107\n\
 <h2>Malformed Request</h2>\n\
 Your browser sent a request I could not understand.\n\
 </body></html>";
-	return send_text(req->requestSD, output);
+	retValue = send_text(req->requestSD, output);
+	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "400 Bad Request");
+	return retValue;
 }
 
 int send_file_not_found(request * req){
+	int retValue;
 	char * output = "HTTP/1.1 404 Not Found\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -205,11 +209,13 @@ Content‐Length: 117\n\
 <h2>Document not found</h2>\n\
 You asked for a document that doesn't exist. That is so sad.\n\
 </body></html>";
+	retValue = send_text(req->requestSD, output);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "404 Not Found");
-	return send_text(req->requestSD, output);
+	return retValue;
 }
 
 int send_permission_denied(request * req){
+	int retValue;
 	char * output = "HTTP/1.1 403 Forbidden\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -219,11 +225,14 @@ Content‐Length: 130\n\
 <h2>Permission Denied</h2>\n\
 You asked for a document you are not permitted to see. It sucks to be you.\n\
 </body></html>";
-	return send_text(req->requestSD, output);
+	retValue = send_text(req->requestSD, output);
+	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "403 Forbidden");
+	return retValue;
 }
 
 int send_internal_service_error(request * req){
-char * output = "HTTP/1.1 500 Internal Server Error\n\
+	int retValue;
+	char * output = "HTTP/1.1 500 Internal Server Error\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
 Content‐Length: 131\n\
@@ -232,7 +241,9 @@ Content‐Length: 131\n\
 <h2>Oops. That Didn't work</h2>\n\
 I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
 </body></html>";
-	return send_text(req->requestSD, output);
+	retValue = send_text(req->requestSD, output);
+	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "500 Internal Server Error");
+	return retValue;
 }
 
 char * get_good_response(int contentLen, char * content){
