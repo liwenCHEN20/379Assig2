@@ -28,13 +28,16 @@ int main(int argc,  char *argv[])
 	struct sigaction sa;
     int sd;
 	pid_t pid;
-
+	logger * logg;
 	/*Parse all Arguments*/
 	memset(&inputs, 0, sizeof(serverInputs));
 
 	parseArgs(&inputs, argc, argv);
 
 	/******* NEED TO INITIALIZE LOGGER STILL *****/
+	logg = init_logger(inputs.logPath);
+	printf("logger init: %s\n", logg->filepath);
+
 
 #ifdef DEBUG
 printf("port: %d\n", (int)(inputs.port));
@@ -79,14 +82,16 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 
 	for(;;) {
 		request req;
-		int clientsd = accept_connection(sd);
+		memset(&req, 0, sizeof(req));
+		req.l = logg;
+		int clientsd = accept_connection(sd, &req.client);
 		/*
 		 * We fork child to deal with each connection, this way more
 		 * than one client can connect to us and get served at any one
 		 * time.
 		 */
 
-		memset(&req, 0, sizeof(req));
+		
 		req.requestSD = clientsd;
 
 		pid = fork();

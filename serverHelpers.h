@@ -2,6 +2,7 @@
 #define SERVERHELPERS_H
 
 #include <sys/types.h>
+#include <netinet/in.h>
 
 typedef struct{
 	u_short port;
@@ -19,6 +20,6 @@ static void usage();
 
 int init_socket(serverInputs *);
 
-int accept_connection(int);
+int accept_connection(int, struct sockaddr_in *);
 
 #endif

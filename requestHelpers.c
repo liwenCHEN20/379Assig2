@@ -3,6 +3,10 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 #include <fcntl.h>
 #include "requestHelpers.h"
 
@@ -10,11 +14,11 @@
 
 void handle_request(request * req, char * docPath){
 	char inbuffer[1024];
-	char * tokens[3];
+	char * tokens[4];
 
 	read(req->requestSD, inbuffer, sizeof(inbuffer));
 	parse_request(inbuffer, tokens);
-
+	req->parsedReq = tokens;
 #ifdef DEBUG
 
 	/*Lets try to print the request*/
@@ -30,9 +34,9 @@ if (is_valid_request(tokens)){
 #endif
 	
 	if (!is_valid_request(tokens)){
-		send_bad_request(req->requestSD);
+		send_bad_request(req);
 	}else {
-		send_file(req->requestSD, docPath, tokens[1]);
+		send_file(req, docPath, tokens[1]);
 	}
 
 }
@@ -46,7 +50,6 @@ int is_valid_request(char ** tokens){
 	}
 
 	if (strcmp(tokens[2], "HTTP/1.1") != 0){
-		printf("Last token failed\n");
 		return 0;
 	}
 	return 1;
@@ -58,6 +61,9 @@ int parse_request(char * req, char **tokens){
 
 	/*Get the first line*/
 	line = strtok(req, "\r");
+
+	tokens[3] = (char *)malloc(strlen(line) + 1);
+	strcpy(tokens[3], line);
 
 	/*Get firs token */
 	tok = strtok(line, " ");
@@ -114,7 +120,6 @@ FILE * open_file(char * docDIR, char * filePath, int * error){
 		return NULL;
 	}
 
-	printf("is not a dir\n");
 	/* now we attempt to open */
 	file = fopen(fullPath, "r");
 	*error = errno;
@@ -139,7 +144,7 @@ int read_file(FILE * fd, char ** buffer){
 	return fileSize;
 }
 
-int send_file(int sd, char * docDIR, char * filePath){
+int send_file(request * req, char * docDIR, char * filePath){
 	int error;
 	char *buffer;
 	FILE * file = NULL; 
@@ -150,16 +155,15 @@ int send_file(int sd, char * docDIR, char * filePath){
 	
 	/* catch errors */
 	if (file == NULL){
-		printf("null file\n");
 		switch (error){
 			case ENOENT:
-				send_file_not_found(sd);
+				send_file_not_found(req);
 				break;
 			case EACCES:
-				send_permission_denied(sd);
+				send_permission_denied(req);
 				break;
 			default:
-				send_internal_service_error(sd);
+				send_internal_service_error(req);
 				break;
 		}
 		return;
@@ -170,7 +174,7 @@ int send_file(int sd, char * docDIR, char * filePath){
 
 	response = get_good_response(responseSize, buffer);
 
-	send_text(sd, response);
+	send_text(req->requestSD, response);
 
 }
 
@@ -178,7 +182,7 @@ int send_file(int sd, char * docDIR, char * filePath){
  * may not have time to remove before submission.
  */
 
-int send_bad_request(int sd){
+int send_bad_request(request * req){
 	char * output = "HTTP/1.1 400 Bad Request\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -188,10 +192,10 @@ Content‐Length: 107\n\
 <h2>Malformed Request</h2>\n\
 Your browser sent a request I could not understand.\n\
 </body></html>";
-	return send_text(sd, output);
+	return send_text(req->requestSD, output);
 }
 
-int send_file_not_found(int sd){
+int send_file_not_found(request * req){
 	char * output = "HTTP/1.1 404 Not Found\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -201,10 +205,11 @@ Content‐Length: 117\n\
 <h2>Document not found</h2>\n\
 You asked for a document that doesn't exist. That is so sad.\n\
 </body></html>";
-	return send_text(sd, output);
+	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "404 Not Found");
+	return send_text(req->requestSD, output);
 }
 
-int send_permission_denied(int sd){
+int send_permission_denied(request * req){
 	char * output = "HTTP/1.1 403 Forbidden\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -214,10 +219,10 @@ Content‐Length: 130\n\
 <h2>Permission Denied</h2>\n\
 You asked for a document you are not permitted to see. It sucks to be you.\n\
 </body></html>";
-	return send_text(sd, output);
+	return send_text(req->requestSD, output);
 }
 
-int send_internal_service_error(int sd){
+int send_internal_service_error(request * req){
 char * output = "HTTP/1.1 500 Internal Server Error\n\
 Date: Mon 21 Jan 2008 18:06:16 GMT\n\
 Content‐Type: text/html\n\
@@ -227,7 +232,7 @@ Content‐Length: 131\n\
 <h2>Oops. That Didn't work</h2>\n\
 I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
 </body></html>";
-	return send_text(sd, output);
+	return send_text(req->requestSD, output);
 }
 
 char * get_good_response(int contentLen, char * content){

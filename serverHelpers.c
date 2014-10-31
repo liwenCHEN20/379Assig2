@@ -93,11 +93,10 @@ int init_socket(serverInputs *inputs){
 	return sd;
 }
 
-int accept_connection(int socket){
-	struct sockaddr_in client;
+int accept_connection(int socket, struct sockaddr_in * client){
 	int clientsd;
 
-	socklen_t clientlen = sizeof(&client);
+	socklen_t clientlen = sizeof(client);
 	clientsd = accept(socket, (struct sockaddr *)&client, &clientlen);
 	if (clientsd == -1)
 		err(1, "accept failed");
