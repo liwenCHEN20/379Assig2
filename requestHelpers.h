@@ -15,7 +15,7 @@ int is_valid_request(char **);
 
 int parse_request(char *, char **);
 
-int open_file(char *, char *, FILE **);
+FILE * open_file(char *, char *, int *);
 
 int read_file(FILE *, char **);
 

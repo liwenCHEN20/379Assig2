@@ -95,9 +95,10 @@ int send_text(int sd, char * text){
 	return 1;
 }
 
-int open_file(char * docDIR, char * filePath, FILE ** file){
+FILE * open_file(char * docDIR, char * filePath, int * error){
 	errno = 0;
 	struct stat buf;
+	FILE * file;
 	if(filePath[0] == '/') filePath++;
 
 
@@ -107,24 +108,22 @@ int open_file(char * docDIR, char * filePath, FILE ** file){
 	strcpy(fullPath, docDIR);
 	strcat(fullPath, filePath);
 
-	printf("filepath to open:  %s\n", fullPath);
-
 	/*check to make sure we arent opening a dir*/
 	if(stat(fullPath, &buf) != 0 || S_ISDIR(buf.st_mode)){
-		printf("is a dir\n");
-		return errno;
+		*error = errno;
+		return NULL;
 	}
 
 	printf("is not a dir\n");
 	/* now we attempt to open */
-	*file = fopen(fullPath, "r");
-	printf("file opened: %p\n", (void *)*file);
+	file = fopen(fullPath, "r");
+	*error = errno;
 	free(fullPath);
 
 	/* Reduce the chance of thread race
 	 * for errno by copying it. Still not perfect.
 	 */
-	return errno;
+	return file;
 }
 
 int read_file(FILE * fd, char ** buffer){
@@ -146,10 +145,9 @@ int send_file(int sd, char * docDIR, char * filePath){
 	FILE * file = NULL; 
 	int responseSize;
 	char * response;
-	error = open_file(docDIR, filePath, &file);
-	
-	printf("file opened: %p\n", (void *)file);
 
+	file = open_file(docDIR, filePath, &error);
+	
 	/* catch errors */
 	if (file == NULL){
 		printf("null file\n");
@@ -168,19 +166,12 @@ int send_file(int sd, char * docDIR, char * filePath){
 	}
 
 	/* read in the file */
-	printf("about to read\n");
-
 	responseSize = read_file(file, &buffer);
-
-	printf("file read: %s\n", buffer);
 
 	response = get_good_response(responseSize, buffer);
 
-	printf("response built: %s\n", response);
-
 	send_text(sd, response);
 
-	printf("text sent\n");
 }
 
 /* THESE SHOULD ALL BE IN TEXT FILES NOT IN SOURCE 
