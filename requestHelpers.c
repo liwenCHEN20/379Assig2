@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "requestHelpers.h"
 
 #define BUFFSIZE 1024
 
-void handle_request(request * req){
+void handle_request(request * req, char * docPath){
 	char inbuffer[1024];
 	char * tokens[3];
 
@@ -26,11 +28,11 @@ if (is_valid_request(tokens)){
 }
 
 #endif
-
 	
 	if (!is_valid_request(tokens)){
 		send_bad_request(req->requestSD);
-		return;
+	}else {
+		send_file(req->requestSD, docPath, tokens[1]);
 	}
 
 }
@@ -93,9 +95,11 @@ int send_text(int sd, char * text){
 	return 1;
 }
 
-int open_file(char * docDIR, char * filePath, FILE * file){
+int open_file(char * docDIR, char * filePath, FILE ** file){
 	errno = 0;
+	struct stat buf;
 	if(filePath[0] == '/') filePath++;
+
 
 	/*create the full path*/
 	char * fullPath = (char *)malloc(strlen(docDIR) + strlen(filePath) + 1);
@@ -103,9 +107,18 @@ int open_file(char * docDIR, char * filePath, FILE * file){
 	strcpy(fullPath, docDIR);
 	strcat(fullPath, filePath);
 
-	/* now we attempt to open */
-	file = fopen(fullPath, "r");
+	printf("filepath to open:  %s\n", fullPath);
 
+	/*check to make sure we arent opening a dir*/
+	if(stat(fullPath, &buf) != 0 || S_ISDIR(buf.st_mode)){
+		printf("is a dir\n");
+		return errno;
+	}
+
+	printf("is not a dir\n");
+	/* now we attempt to open */
+	*file = fopen(fullPath, "r");
+	printf("file opened: %p\n", (void *)*file);
 	free(fullPath);
 
 	/* Reduce the chance of thread race
@@ -114,29 +127,32 @@ int open_file(char * docDIR, char * filePath, FILE * file){
 	return errno;
 }
 
-int read_file(FILE * fd, char * buffer){
+int read_file(FILE * fd, char ** buffer){
 	long fileSize;
 
 	fseek(fd, 0, SEEK_END);
 	fileSize = ftell(fd);
 	fseek(fd, 0, SEEK_SET);
 
-	buffer = (char *)malloc(fileSize + 1);
-	fread(buffer, 1, fileSize, fd);
+	*buffer = (char *)malloc(fileSize + 1);
 
+	fread(*buffer, 1, fileSize, fd);
 	return fileSize;
 }
 
 int send_file(int sd, char * docDIR, char * filePath){
 	int error;
 	char *buffer;
-	FILE * file; 
+	FILE * file = NULL; 
 	int responseSize;
 	char * response;
-	error = open_file(docDIR, filePath, file);
+	error = open_file(docDIR, filePath, &file);
 	
+	printf("file opened: %p\n", (void *)file);
+
 	/* catch errors */
 	if (file == NULL){
+		printf("null file\n");
 		switch (error){
 			case ENOENT:
 				send_file_not_found(sd);
@@ -152,9 +168,19 @@ int send_file(int sd, char * docDIR, char * filePath){
 	}
 
 	/* read in the file */
+	printf("about to read\n");
 
-	responseSize = read_file(file, buffer);
-	get_good_response(responseSize, buffer, response);
+	responseSize = read_file(file, &buffer);
+
+	printf("file read: %s\n", buffer);
+
+	response = get_good_response(responseSize, buffer);
+
+	printf("response built: %s\n", response);
+
+	send_text(sd, response);
+
+	printf("text sent\n");
 }
 
 /* THESE SHOULD ALL BE IN TEXT FILES NOT IN SOURCE 
@@ -213,10 +239,11 @@ I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
 	return send_text(sd, output);
 }
 
-char * get_good_response(int contentLen, char * content, char * fullOutput){
+char * get_good_response(int contentLen, char * content){
 	char * header;
 	char * lengthLine;
 	char * contentLine;
+	char * fullOutput;
 	int totalLength;
 	int partialLength;
 
@@ -226,11 +253,15 @@ Content-Type: text/html\n";
 
 	lengthLine = "Content-Length:";
 
-	partialLength = sprintf(NULL, "%s %d\n\n", lengthLine, contentLen);
+
+	partialLength = snprintf(NULL, 0,"%s %d\n\n", lengthLine, contentLen);
+
 
 	contentLine = (char *)malloc(partialLength + 1);
 
+
 	sprintf(contentLine, "%s %d\n\n", lengthLine, contentLen);
+
 
 	fullOutput = (char *) malloc(strlen(contentLine) + 
 		strlen(header) + 
@@ -238,5 +269,7 @@ Content-Type: text/html\n";
 
 
 	sprintf(fullOutput, "%s%s%s", header, contentLine, content);
+
+
 	return fullOutput;
 }

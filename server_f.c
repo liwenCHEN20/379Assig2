@@ -94,7 +94,7 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		     err(1, "fork failed");
 
 		if(pid == 0) {
-			handle_request(&req);
+			handle_request(&req, inputs.directory);
 			exit(0);
 		}
 		close(clientsd);
