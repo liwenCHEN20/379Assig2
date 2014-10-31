@@ -10,6 +10,9 @@
 #include <fcntl.h>
 #include "requestHelpers.h"
 
+/* This controls how much of a file is read into mem
+ * and sent at one time to a client. Increase for greater
+ * speed AND memory usage */
 #define BUFFSIZE 1024
 
 void handle_request(request * req, char * docPath){
@@ -94,6 +97,7 @@ int send_text(int sd, char * text){
 		if (w == -1) {
 			if (errno != EINTR)
 				err(1, "write failed");
+			return 0;
 		}
 		else
 			written += w;
@@ -178,7 +182,29 @@ int send_file(request * req, char * docDIR, char * filePath){
 
 }
 
-/* THESE SHOULD ALL BE IN TEXT FILES NOT IN SOURCE 
+int transfer_file(FILE *file, int length, int sd){
+	char buffer[BUFFSIZE];
+	int read = 0;
+	int written = 0;
+
+	while(read < length){
+		read += fread(buffer, 1, BUFFSIZE, file);
+		if (!send_text(sd, buffer)) return 0;
+	}
+	return 1;
+}
+
+long get_file_size(FILE *fd){
+	long fileSize;
+
+	fseek(fd, 0, SEEK_END);
+	fileSize = ftell(fd);
+	fseek(fd, 0, SEEK_SET);
+
+	return fileSize;
+}
+
+/* Big strings should be in txt files not source
  * may not have time to remove before submission.
  */
 

@@ -36,4 +36,8 @@ int send_text(int, char *);
 
 char * get_good_response(int, char *);
 
+int transfer_file(FILE *, int, int);
+
+long get_file_size(FILE *);
+
 #endif
