@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <time.h>
+#include <string.h>
 #include <semaphore.h>
 #include "logHelper.h"
 
@@ -21,17 +24,21 @@ logger* init_logger(char * file){
 
 void validate_log_path(char * file){
 	if (!is_valid_log_path(file)){
-		printf("Log Path is Invalid or Access is denied");
 		exit(1);
 	}
 }
 
 int is_valid_log_path(char *file){
-		FILE *f = fopen(file, "r+");
-		if (f = NULL){
+		char * pch;
+		char directory[strlen(file)];
+
+		pch = strrchr(file, '/');
+		strncpy(directory, file, pch-file+1);
+		DIR *d = opendir(directory);
+		if (d == NULL){
 			return 0;
 		}
-		close(f);
+		closedir(d);
 		return 1;
 }
 
