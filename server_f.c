@@ -85,6 +85,7 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		memset(&req, 0, sizeof(req));
 		req.l = logg;
 		int clientsd = accept_connection(sd, &req.client);
+		req.inputsDIR = inputs.directory;
 		/*
 		 * We fork child to deal with each connection, this way more
 		 * than one client can connect to us and get served at any one
@@ -99,7 +100,7 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		     err(1, "fork failed");
 
 		if(pid == 0) {
-			handle_request(&req, inputs.directory);
+			handle_request(&req);
 			exit(0);
 		}
 		close(clientsd);

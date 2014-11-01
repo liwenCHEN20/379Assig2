@@ -15,7 +15,7 @@
  * speed AND memory usage */
 #define BUFFSIZE 1024
 
-void handle_request(request * req, char * docPath){
+void handle_request(request * req){
 	char inbuffer[1024];
 	char * tokens[4];
 
@@ -39,7 +39,7 @@ if (is_valid_request(tokens)){
 	if (!is_valid_request(tokens)){
 		send_bad_request(req);
 	}else {
-		send_file(req, docPath, tokens[1]);
+		send_file(req, req->inputsDIR, tokens[1]);
 	}
 
 	close(req->requestSD);

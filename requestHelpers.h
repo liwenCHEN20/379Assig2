@@ -10,9 +10,10 @@ typedef struct {
 	logger * l;
 	struct sockaddr_in client;
 	char ** parsedReq;
+	char * inputsDIR;
 }request;
 
-void handle_request(request *, char *);
+void handle_request(request *);
 
 int is_valid_request(char **);
 
