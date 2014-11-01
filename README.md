@@ -25,4 +25,9 @@ BOTH:
 
 *	need to handle client disconnects and log them.
 *	need to figure out how to close the shared semaphor.
+  * handle sigint and call the logger dealloc 	  
 *	deamonize on startup
+*	Better file sepparation
+  * Create a file for file oeraitons
+  * Create a file for all of those long responses
+  * create a signal handlers file
