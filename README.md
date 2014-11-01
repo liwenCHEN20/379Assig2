@@ -25,3 +25,4 @@ BOTH:
 
 *	need to handle client disconnects and log them.
 *	need to figure out how to close the shared semaphor.
+*	deamonize on startup
