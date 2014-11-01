@@ -15,6 +15,10 @@
  * speed AND memory usage */
 #define BUFFSIZE 1024
 
+void * thread_starter (void * req){
+	handle_request((request *) req);
+}
+
 void handle_request(request * req){
 	char inbuffer[1024];
 	char * tokens[4];

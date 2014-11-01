@@ -13,6 +13,8 @@ typedef struct {
 	char * inputsDIR;
 }request;
 
+void * thread_starter (void*);
+
 void handle_request(request *);
 
 int is_valid_request(char **);
