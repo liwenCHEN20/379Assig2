@@ -95,9 +95,10 @@ int send_text(int sd, char * text){
 		w = write(sd, text + written,
 		    strlen(text) - written);
 		if (w == -1) {
-			if (errno != EINTR)
+			if (errno != EINTR){
 				err(1, "write failed");
-			return 0;
+				return 0;
+			}
 		}
 		else
 			written += w;
@@ -173,12 +174,15 @@ int send_file(request * req, char * docDIR, char * filePath){
 		return;
 	}
 
-	/* read in the file */
-	responseSize = read_file(file, &buffer);
-
-	response = get_good_response(responseSize, buffer);
-
+	responseSize = get_file_size(file);
+	response = get_good_response(responseSize);
+	printf("ressponse: %s\n", response);
 	send_text(req->requestSD, response);
+	if(transfer_file(file, responseSize, req->requestSD)){
+		printf("Transmitted file correctly!!!!\n");
+	}else{
+		printf("Error transmitting file\n");
+	}
 
 }
 
@@ -188,6 +192,7 @@ int transfer_file(FILE *file, int length, int sd){
 	int written = 0;
 
 	while(read < length){
+		memset(buffer, 0, BUFFSIZE);
 		read += fread(buffer, 1, BUFFSIZE, file);
 		if (!send_text(sd, buffer)) return 0;
 	}
@@ -272,7 +277,7 @@ I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
 	return retValue;
 }
 
-char * get_good_response(int contentLen, char * content){
+char * get_good_response(int contentLen){
 	char * header;
 	char * lengthLine;
 	char * contentLine;
@@ -297,12 +302,10 @@ Content-Type: text/html\n";
 
 
 	fullOutput = (char *) malloc(strlen(contentLine) + 
-		strlen(header) + 
-		contentLen + 2);
+		strlen(header) + 2);
 
 
-	sprintf(fullOutput, "%s%s%s", header, contentLine, content);
-
+	sprintf(fullOutput, "%s%s", header, contentLine);
 
 	return fullOutput;
 }

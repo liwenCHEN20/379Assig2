@@ -34,7 +34,7 @@ int send_internal_service_error(request *);
 
 int send_text(int, char *);
 
-char * get_good_response(int, char *);
+char * get_good_response(int);
 
 int transfer_file(FILE *, int, int);
 
