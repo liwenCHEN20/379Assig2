@@ -18,9 +18,9 @@ int is_valid_request(char **);
 
 int parse_request(char *, char **);
 
-FILE * open_file(char *, char *, int *);
+void free_array(char **, int);
 
-int read_file(FILE *, char **);
+FILE * open_file(char *, char *, int *);
 
 int send_file(request *, char *, char *);
 

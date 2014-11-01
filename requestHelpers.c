@@ -42,6 +42,8 @@ if (is_valid_request(tokens)){
 		send_file(req, docPath, tokens[1]);
 	}
 
+	close(req->requestSD);
+	free_array(tokens, 4);
 }
 
 
@@ -84,6 +86,13 @@ int parse_request(char * req, char **tokens){
 	strcpy(tokens[2], tok);
 
 	return 3;
+}
+
+void free_array(char ** tokens, int len){
+	int i;
+	for ( i=0; i < len; i++){
+		free(tokens[i]);
+	}
 }
 
 int send_text(int sd, char * text){
@@ -136,18 +145,6 @@ FILE * open_file(char * docDIR, char * filePath, int * error){
 	return file;
 }
 
-int read_file(FILE * fd, char ** buffer){
-	long fileSize;
-
-	fseek(fd, 0, SEEK_END);
-	fileSize = ftell(fd);
-	fseek(fd, 0, SEEK_SET);
-
-	*buffer = (char *)malloc(fileSize + 1);
-
-	fread(*buffer, 1, fileSize, fd);
-	return fileSize;
-}
 
 int send_file(request * req, char * docDIR, char * filePath){
 	int error;
@@ -183,6 +180,10 @@ int send_file(request * req, char * docDIR, char * filePath){
 	}else{
 		printf("Error transmitting file\n");
 	}
+
+	/*close and free resources */
+	close(file);
+	free(response);
 
 }
 
@@ -306,6 +307,8 @@ Content-Type: text/html\n";
 
 
 	sprintf(fullOutput, "%s%s", header, contentLine);
+
+	free(contentLine);
 
 	return fullOutput;
 }
