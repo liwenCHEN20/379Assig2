@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 
 typedef struct {
-	int requestSD;
+	int *requestSD;
 	char * requesstBuffer;
 	logger * l;
 	struct sockaddr_in client;

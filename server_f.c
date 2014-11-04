@@ -93,7 +93,7 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		 */
 
 		
-		req.requestSD = clientsd;
+		req.requestSD = &clientsd;
 
 		pid = fork();
 		if (pid == -1)

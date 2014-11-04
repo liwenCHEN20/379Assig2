@@ -17,13 +17,15 @@
 
 void * thread_starter (void * req){
 	handle_request((request *) req);
+	//free(((request *)req)->requestSD);
+	//free(req);
 }
 
 void handle_request(request * req){
 	char inbuffer[1024];
 	char * tokens[4];
 
-	read(req->requestSD, inbuffer, sizeof(inbuffer));
+	read(*(req->requestSD), inbuffer, sizeof(inbuffer));
 	parse_request(inbuffer, tokens);
 	req->parsedReq = tokens;
 #ifdef DEBUG
@@ -46,7 +48,7 @@ if (is_valid_request(tokens)){
 		send_file(req, req->inputsDIR, tokens[1]);
 	}
 
-	close(req->requestSD);
+	close(*(req->requestSD));
 	free_array(tokens, 4);
 }
 
@@ -178,8 +180,8 @@ int send_file(request * req, char * docDIR, char * filePath){
 	responseSize = get_file_size(file);
 	response = get_good_response(responseSize);
 	printf("ressponse: %s\n", response);
-	send_text(req->requestSD, response);
-	if(transfer_file(file, responseSize, req->requestSD)){
+	send_text(*(req->requestSD), response);
+	if(transfer_file(file, responseSize, *(req->requestSD))){
 		printf("Transmitted file correctly!!!!\n");
 	}else{
 		printf("Error transmitting file\n");
@@ -229,7 +231,7 @@ Content‐Length: 107\n\
 <h2>Malformed Request</h2>\n\
 Your browser sent a request I could not understand.\n\
 </body></html>";
-	retValue = send_text(req->requestSD, output);
+	retValue = send_text(*(req->requestSD), output);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "400 Bad Request");
 	return retValue;
 }
@@ -245,7 +247,7 @@ Content‐Length: 117\n\
 <h2>Document not found</h2>\n\
 You asked for a document that doesn't exist. That is so sad.\n\
 </body></html>";
-	retValue = send_text(req->requestSD, output);
+	retValue = send_text(*(req->requestSD), output);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "404 Not Found");
 	return retValue;
 }
@@ -261,7 +263,7 @@ Content‐Length: 130\n\
 <h2>Permission Denied</h2>\n\
 You asked for a document you are not permitted to see. It sucks to be you.\n\
 </body></html>";
-	retValue = send_text(req->requestSD, output);
+	retValue = send_text(*(req->requestSD), output);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "403 Forbidden");
 	return retValue;
 }
@@ -277,7 +279,7 @@ Content‐Length: 131\n\
 <h2>Oops. That Didn't work</h2>\n\
 I had some sort of problem dealing with your request. Sorry, I'm lame.\n\
 </body></html>";
-	retValue = send_text(req->requestSD, output);
+	retValue = send_text(*(req->requestSD), output);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "500 Internal Server Error");
 	return retValue;
 }

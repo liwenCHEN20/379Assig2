@@ -66,24 +66,9 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		*clientsd = accept_connection(sd, &req->client);
 		req->inputsDIR = inputs.directory;
 		printf("connec accepted\n");
-		/*
-		 * We fork child to deal with each connection, this way more
-		 * than one client can connect to us and get served at any one
-		 * time.
-		 */
 
 		
-		req->requestSD = *clientsd;
-		/* Server F
-		pid = fork();
-		if (pid == -1)
-		     err(1, "fork failed");
-
-		if(pid == 0) {
-			handle_request(&req);
-			exit(0);
-		}
-		*/
+		req->requestSD = clientsd;
 		printf("spinning off thead\n");
 		pthread_create(&thread, NULL, thread_starter, (void*)req);
 		//pthread_join(thread, NULL);

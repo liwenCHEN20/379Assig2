@@ -1,6 +1,6 @@
 CC := gcc
 
-CFLAGS := -g -DDEBUG -lpthread
+CFLAGS := -g -DDEBUG -lpthread -Wall
 
 server_f : server_f.o logHelper.o serverHelpers.o requestHelpers.o
 	$(CC) -o $@ $^ $(CFLAGS)
@@ -12,7 +12,7 @@ server_t : server_t.o logHelper.o serverHelpers.o requestHelpers.o
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean :
-	rm -f *.o
+	rm -f *.o server_f
 
 server_f.o : server_f.c serverHelpers.h logHelper.h requestHelpers.h
 server_t.o : server_t.c serverHelpers.h logHelper.h requestHelpers.h

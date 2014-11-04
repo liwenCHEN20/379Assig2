@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
 #include <semaphore.h>
 #include "logHelper.h"
 
@@ -51,8 +52,11 @@ void write_log(logger * logWirter, char * req, char * clientAddr, char * resp){
 
 	FILE * file = fopen(logWirter->filepath, "a+");
 	if (file != NULL){
+		printf("writing to log: %s\t%s\t%s\t%s\n", ctime(&t), clientAddr, req, resp);
 		fprintf(file, "%s\t%s\t%s\t%s\n", ctime(&t), clientAddr, req, resp);
-		close(file);
+		fclose(file);
+	} else {
+		printf("couldn't write to log file\n");
 	}
 	printf("leaving mutex\n");
 	sem_post(sem);
