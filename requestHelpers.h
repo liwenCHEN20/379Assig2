@@ -35,6 +35,8 @@ int send_permission_denied(request *);
 
 int send_internal_service_error(request *);
 
+int write_good_response(request * req, long, long);
+
 int send_text(int, char *);
 
 char * get_good_response(int);

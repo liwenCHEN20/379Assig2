@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <err.h>
 #include <errno.h>
@@ -61,10 +62,12 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		memset(req, 0, sizeof(*req));
 		req->l = logg;
 		int *clientsd = malloc(sizeof(int));
-		*clientsd = accept_connection(sd, &req->client);
+		*clientsd = accept_connection(sd, &(req->client));
 		req->inputsDIR = inputs.directory;
 		printf("connec accepted\n");
-
+		printf("**********ACCEPTED CONNECTION FROM***************\n\n\n");
+		printf("%s\n\n\n", inet_ntoa((req->client).sin_addr)); 		
+		printf("**************************************************\n");
 		
 		req->requestSD = clientsd;
 		printf("spinning off thead\n");

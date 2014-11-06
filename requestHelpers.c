@@ -15,7 +15,7 @@
 /* This controls how much of a file is read into mem
  * and sent at one time to a client. Increase for greater
  * speed AND memory usage */
-#define BUFFSIZE 1024
+#define BUFFSIZE 30
 
 void * thread_starter (void * req){
 	handle_request((request *) req);
@@ -49,11 +49,11 @@ if (is_valid_request(tokens)){
 }
 
 #endif
+	req->parsedReq = tokens;
 
 	if (!is_valid_request(tokens)){
 		send_bad_request(req);
 	}else {
-		req->parsedReq = tokens;
 		send_file(req, req->inputsDIR, tokens[1]);
 	}
 
@@ -88,6 +88,8 @@ int parse_request(char * req, char **tokens){
 	printf("Line before SEGF: %s\n", line);
 
 	if (line == NULL){
+		//Need a better way to do this
+		tokens[3] = "<unusable or empty request>";
 		return 0;
 	}
 
@@ -174,7 +176,8 @@ int send_file(request * req, char * docDIR, char * filePath){
 	int error;
 	char *buffer;
 	FILE * file = NULL; 
-	int responseSize;
+	unsigned int responseSize;
+	unsigned int sentSize;
 	char * response;
 
 	file = open_file(docDIR, filePath, &error);
@@ -199,12 +202,9 @@ int send_file(request * req, char * docDIR, char * filePath){
 	response = get_good_response(responseSize);
 	printf("ressponse: %s\n", response);
 	send_text(*(req->requestSD), response);
-	if(transfer_file(file, responseSize, *(req->requestSD)) == responseSize) {
-		printf("Transmitted file correctly!!!!\n");
-		write_good_response(req, responseSize);
-	}else{
-		printf("Error transmitting file\n");
-	}
+
+	sentSize = transfer_file(file, responseSize, *(req->requestSD));
+	write_good_response(req, responseSize, sentSize);
 
 	/*close and free resources */
 	fclose(file);
@@ -220,7 +220,7 @@ int transfer_file(FILE *file, int length, int sd){
 	while(read < length){
 		memset(buffer, 0, BUFFSIZE);
 		read += fread(buffer, 1, BUFFSIZE, file);
-		if (!send_text(sd, buffer)) return 0;
+		if (!send_text(sd, buffer)) break;
 	}
 	return read;
 }
@@ -239,9 +239,9 @@ long get_file_size(FILE *fd){
  * may not have time to remove before submission.
  */
 
-int write_good_response(request * req, long size){
+int write_good_response(request * req, long size, long sent){
 	char output[256];
-	sprintf(output, "200 OK %d/%d", size, size);
+	sprintf(output, "200 OK %d/%d", sent, size);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), output);
 }
 
@@ -257,6 +257,7 @@ Content‐Length: 107\n\
 Your browser sent a request I could not understand.\n\
 </body></html>";
 	retValue = send_text(*(req->requestSD), output);
+	printf("before seg fault log: %s\n", req->parsedReq[3]);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "400 Bad Request");
 	return retValue;
 }
