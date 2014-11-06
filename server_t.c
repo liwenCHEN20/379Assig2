@@ -20,9 +20,7 @@
 int main(int argc,  char *argv[])
 {
 	serverInputs inputs;
-	struct sigaction sa;
     int sd;
-	pid_t pid;
 	logger * logg;
 	/*Parse all Arguments*/
 	memset(&inputs, 0, sizeof(serverInputs));

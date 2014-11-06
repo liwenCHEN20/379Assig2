@@ -12,7 +12,7 @@ server_t : server_t.o logHelper.o serverHelpers.o requestHelpers.o
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean :
-	rm -f *.o server_f
+	rm -f *.o server_f server_t
 
 server_f.o : server_f.c serverHelpers.h logHelper.h requestHelpers.h
 server_t.o : server_t.c serverHelpers.h logHelper.h requestHelpers.h

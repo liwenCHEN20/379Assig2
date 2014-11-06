@@ -23,6 +23,7 @@ int is_valid_path(char * file){
 		return 1;
 	}
 	usage();
+	return 0;
 }
 
 int is_valid_port(char * portStr){

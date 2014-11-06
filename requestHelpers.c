@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <fcntl.h>
 #include "requestHelpers.h"
@@ -17,8 +19,8 @@
 
 void * thread_starter (void * req){
 	handle_request((request *) req);
-	//free(((request *)req)->requestSD);
-	//free(req);
+	free(((request *)req)->requestSD);
+	free(req);
 }
 
 void handle_request(request * req){
@@ -26,8 +28,14 @@ void handle_request(request * req){
 	char * tokens[4];
 
 	read(*(req->requestSD), inbuffer, sizeof(inbuffer));
-	parse_request(inbuffer, tokens);
-	req->parsedReq = tokens;
+
+	//We got a null request
+	if (parse_request(inbuffer, tokens) == 0){
+		close(*(req->requestSD));
+		return;
+	}
+
+	
 #ifdef DEBUG
 
 	/*Lets try to print the request*/
@@ -41,15 +49,17 @@ if (is_valid_request(tokens)){
 }
 
 #endif
-	
+
 	if (!is_valid_request(tokens)){
 		send_bad_request(req);
 	}else {
+		req->parsedReq = tokens;
 		send_file(req, req->inputsDIR, tokens[1]);
 	}
 
-	close(*(req->requestSD));
+	
 	free_array(tokens, 4);
+	close(*(req->requestSD));
 }
 
 
@@ -69,25 +79,33 @@ int is_valid_request(char ** tokens){
 int parse_request(char * req, char **tokens){
 	char * line;
 	char * tok;
+	char * saveptr;
 
 	/*Get the first line*/
-	line = strtok(req, "\r");
+	printf("len of line before segf: %d\n", strlen(req));
+	printf("Request before segf: %s\n", req);
+	line = strtok_r(req, "\r", &saveptr);
+	printf("Line before SEGF: %s\n", line);
+
+	if (line == NULL){
+		return 0;
+	}
 
 	tokens[3] = (char *)malloc(strlen(line) + 1);
 	strcpy(tokens[3], line);
 
 	/*Get firs token */
-	tok = strtok(line, " ");
+	tok = strtok_r(line, " ", &saveptr);
 	tokens[0] = (char *)malloc(strlen(tok) + 1);
 	strcpy(tokens[0], tok);
 
 	/*Get second token*/
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	tokens[1] = (char *)malloc(strlen(tok) + 1);
 	strcpy(tokens[1], tok);
 	
 	/* Get last token */
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	tokens[2] = (char *)malloc(strlen(tok) + 1);
 	strcpy(tokens[2], tok);
 
@@ -166,15 +184,15 @@ int send_file(request * req, char * docDIR, char * filePath){
 		switch (error){
 			case ENOENT:
 				send_file_not_found(req);
-				break;
+				return 0;
 			case EACCES:
 				send_permission_denied(req);
-				break;
+				return 0;
 			default:
 				send_internal_service_error(req);
-				break;
+				return 0;
 		}
-		return;
+		return 1;
 	}
 
 	responseSize = get_file_size(file);
@@ -188,7 +206,7 @@ int send_file(request * req, char * docDIR, char * filePath){
 	}
 
 	/*close and free resources */
-	close(file);
+	fclose(file);
 	free(response);
 
 }
