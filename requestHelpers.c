@@ -131,7 +131,7 @@ int send_text(int sd, char * text){
 		    strlen(text) - written);
 		if (w == -1) {
 			if (errno != EINTR){
-				err(1, "write failed");
+				//err(1, "write failed");
 				return 0;
 			}
 		}
