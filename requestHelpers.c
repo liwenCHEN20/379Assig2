@@ -199,8 +199,9 @@ int send_file(request * req, char * docDIR, char * filePath){
 	response = get_good_response(responseSize);
 	printf("ressponse: %s\n", response);
 	send_text(*(req->requestSD), response);
-	if(transfer_file(file, responseSize, *(req->requestSD))){
+	if(transfer_file(file, responseSize, *(req->requestSD)) == responseSize) {
 		printf("Transmitted file correctly!!!!\n");
+		write_good_response(req, responseSize);
 	}else{
 		printf("Error transmitting file\n");
 	}
@@ -221,7 +222,7 @@ int transfer_file(FILE *file, int length, int sd){
 		read += fread(buffer, 1, BUFFSIZE, file);
 		if (!send_text(sd, buffer)) return 0;
 	}
-	return 1;
+	return read;
 }
 
 long get_file_size(FILE *fd){
@@ -237,6 +238,12 @@ long get_file_size(FILE *fd){
 /* Big strings should be in txt files not source
  * may not have time to remove before submission.
  */
+
+int write_good_response(request * req, long size){
+	char output[256];
+	sprintf(output, "200 OK %d/%d", size, size);
+	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), output);
+}
 
 int send_bad_request(request * req){
 	int retValue;
