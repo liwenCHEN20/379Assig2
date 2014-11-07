@@ -33,6 +33,8 @@ int main(int argc,  char *argv[])
 	memset(&inputs, 0, sizeof(serverInputs));
 
 	parseArgs(&inputs, argc, argv);
+	printf("Log File Path: %s\n", inputs.logPath);
+	printf("Documents Path: %s\n", inputs.directory);
 	logg = init_logger(inputs.logPath);
 
 	sd = init_socket(&inputs);
@@ -45,6 +47,8 @@ int main(int argc,  char *argv[])
                 err(1, "sigaction failed");
 
     printf("Server up and  listening on port: %d\n", inputs.port);
+
+    daemon(1,1);
 
 	for(;;) {
 		request req;

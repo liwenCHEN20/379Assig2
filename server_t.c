@@ -24,14 +24,18 @@ int main(int argc,  char *argv[])
     int sd;
 	logger * logg;
 	/*Parse all Arguments*/
-	memset(&inputs, 0, sizeof(serverInputs));
+	//memset(&inputs, 0, sizeof(serverInputs));
 
 	parseArgs(&inputs, argc, argv);
+	printf("Log File Path: %s\n", inputs.logPath);
+	printf("Documents Path: %s\n", inputs.directory);
 	logg = init_logger(inputs.logPath);
 
 	sd = init_socket(&inputs);
 
 	printf("Server up and  listening on port: %d\n", inputs.port);
+
+	daemon(1,1);
 
 	for(;;) {
 		request* req = malloc(sizeof(request));

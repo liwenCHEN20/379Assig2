@@ -22,6 +22,7 @@ logger* init_logger(char * file){
 
 void validate_log_path(char * file){
 	if (!is_valid_log_path(file)){
+		printf("Log file path is invalid\n");
 		exit(1);
 	}
 }

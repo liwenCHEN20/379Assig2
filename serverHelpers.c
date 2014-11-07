@@ -63,7 +63,7 @@ void parseArgs(serverInputs * inputsStruct, int argc, char * argv[]){
 	/* Copy the log DIR let the logger
 	 * helper figure out if it is valid
 	 */
-	 inputsStruct->logPath = argv[3];
+	 inputsStruct->logPath = strdup(argv[3]); 
 }
 
 static void usage()
