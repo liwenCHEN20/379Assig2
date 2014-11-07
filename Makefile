@@ -1,6 +1,6 @@
 CC := gcc
 
-CFLAGS := -g -DDEBUG -lpthread -Wall
+CFLAGS := -lpthread
 
 server_f : server_f.o logHelper.o serverHelpers.o requestHelpers.o
 	$(CC) -o $@ $^ $(CFLAGS)

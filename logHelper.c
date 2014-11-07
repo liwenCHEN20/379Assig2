@@ -31,6 +31,7 @@ int is_valid_log_path(char *file){
 		char * pch;
 		char directory[strlen(file)+1];
 		memset(directory, 0, strlen(file)+1);
+		
 		pch = strrchr(file, '/');
 		strncpy(directory, file, pch-file+1);
 		DIR *d = opendir(directory);

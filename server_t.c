@@ -23,8 +23,7 @@ int main(int argc,  char *argv[])
 	serverInputs inputs;
     int sd;
 	logger * logg;
-	/*Parse all Arguments*/
-	//memset(&inputs, 0, sizeof(serverInputs));
+	
 
 	parseArgs(&inputs, argc, argv);
 	printf("Log File Path: %s\n", inputs.logPath);

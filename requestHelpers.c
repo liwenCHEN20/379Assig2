@@ -223,7 +223,7 @@ long get_file_size(FILE *fd){
 
 int write_good_response(request * req, long size, long sent){
 	char output[256];
-	sprintf(output, "200 OK %d/%d", sent, size);
+	sprintf(output, "200 OK %lu/%lu", sent, size);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), output);
 }
 
