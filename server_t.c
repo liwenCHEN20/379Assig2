@@ -31,6 +31,8 @@ int main(int argc,  char *argv[])
 
 	sd = init_socket(&inputs);
 
+	printf("Server up and  listening on port: %d\n", inputs.port);
+
 	for(;;) {
 		request* req = malloc(sizeof(request));
 		pthread_t thread;
