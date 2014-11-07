@@ -2,6 +2,8 @@ CC := gcc
 
 CFLAGS := -lpthread
 
+all : server_f server_t
+
 server_f : server_f.o logHelper.o serverHelpers.o requestHelpers.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
