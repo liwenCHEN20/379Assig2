@@ -27,34 +27,9 @@ int main(int argc,  char *argv[])
 	memset(&inputs, 0, sizeof(serverInputs));
 
 	parseArgs(&inputs, argc, argv);
-	printf("started:\n");
-	/******* NEED TO INITIALIZE LOGGER STILL *****/
 	logg = init_logger(inputs.logPath);
-	printf("logger init: %s\n", logg->filepath);
-
-
-#ifdef DEBUG
-printf("port: %d\n", (int)(inputs.port));
-printf("Documents DIR: %s\n", inputs.directory);
-printf("Log Path: %s\n", inputs.logPath);
-#endif
-
-	
 
 	sd = init_socket(&inputs);
-
-	/*
-	 * we're now bound, and listening for connections on "sd" -
-	 * each call to "accept" will return us a descriptor talking to
-	 * a connected client
-	 */
-
-	/*
-	 * finally - the main loop.  accept connections and deal with 'em
-	 */
-#ifdef DEBUG
-printf("Server up and listening for connections on port %u\n", inputs.port);
-#endif
 
 	for(;;) {
 		request* req = malloc(sizeof(request));
@@ -64,18 +39,9 @@ printf("Server up and listening for connections on port %u\n", inputs.port);
 		int *clientsd = malloc(sizeof(int));
 		*clientsd = accept_connection(sd, &(req->client));
 		req->inputsDIR = inputs.directory;
-		printf("connec accepted\n");
-		printf("**********ACCEPTED CONNECTION FROM***************\n\n\n");
-		printf("%s\n\n\n", inet_ntoa((req->client).sin_addr)); 		
-		printf("**************************************************\n");
 		
 		req->requestSD = clientsd;
-		printf("spinning off thead\n");
 		pthread_create(&thread, NULL, thread_starter, (void*)req);
-		//pthread_join(thread, NULL);
-		printf("thread completed\n");
-
-
 	}
 	
 }

@@ -34,21 +34,7 @@ void handle_request(request * req){
 		close(*(req->requestSD));
 		return;
 	}
-
 	
-#ifdef DEBUG
-
-	/*Lets try to print the request*/
-if (is_valid_request(tokens)){
-	printf("******RECEIVED VALID REQUEST********\n");
-	printf("--------------Request----------\n");
-	printf("%s\n", tokens[1]);
-	printf("-----------End Request-----------\n");		 
-} else {
-	printf("!!!!!!!!RECEIVED INVALID REQUEST!!!!!!\n");
-}
-
-#endif
 	req->parsedReq = tokens;
 
 	if (!is_valid_request(tokens)){
@@ -82,10 +68,7 @@ int parse_request(char * req, char **tokens){
 	char * saveptr;
 
 	/*Get the first line*/
-	printf("len of line before segf: %d\n", strlen(req));
-	printf("Request before segf: %s\n", req);
 	line = strtok_r(req, "\r", &saveptr);
-	printf("Line before SEGF: %s\n", line);
 
 	if (line == NULL){
 		//Need a better way to do this
@@ -131,7 +114,7 @@ int send_text(int sd, char * text){
 		    strlen(text) - written);
 		if (w == -1) {
 			if (errno != EINTR){
-				//err(1, "write failed");
+				//err(rea1, "write failed");
 				return 0;
 			}
 		}
@@ -200,7 +183,6 @@ int send_file(request * req, char * docDIR, char * filePath){
 
 	responseSize = get_file_size(file);
 	response = get_good_response(responseSize);
-	printf("ressponse: %s\n", response);
 	send_text(*(req->requestSD), response);
 
 	sentSize = transfer_file(file, responseSize, *(req->requestSD));
@@ -257,7 +239,6 @@ Content‐Length: 107\n\
 Your browser sent a request I could not understand.\n\
 </body></html>";
 	retValue = send_text(*(req->requestSD), output);
-	printf("before seg fault log: %s\n", req->parsedReq[3]);
 	write_log(req->l, (req->parsedReq)[3], inet_ntoa((req->client).sin_addr), "400 Bad Request");
 	return retValue;
 }

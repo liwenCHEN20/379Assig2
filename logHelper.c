@@ -17,7 +17,6 @@ logger* init_logger(char * file){
 	mutex = sem_open("logger_mutex1", O_CREAT, 0600, 1);
 	logger* logStr = (logger*)malloc(sizeof(logger));
 	logStr->filepath = file;
-	printf("logger attached to: %s\n", file);
 	return logStr;
 }
 
@@ -43,7 +42,6 @@ int is_valid_log_path(char *file){
 
 void write_log(logger * logWirter, char * req, char * clientAddr, char * resp){
 	//Implement the log writing
-	printf("waiting to enter mutex\n");
 	sem_t* sem = sem_open("logger_mutex1", O_RDWR);
 	sem_wait(sem);
 	time_t t;
@@ -52,13 +50,9 @@ void write_log(logger * logWirter, char * req, char * clientAddr, char * resp){
 
 	FILE * file = fopen(logWirter->filepath, "a+");
 	if (file != NULL){
-		printf("writing to log: %s\t%s\t%s\t%s\n", ctime(&t), clientAddr, req, resp);
 		fprintf(file, "%s\t%s\t%s\t%s\n", ctime(&t), clientAddr, req, resp);
 		fclose(file);
-	} else {
-		printf("couldn't write to log file\n");
 	}
-	printf("leaving mutex\n");
 	sem_post(sem);
 }
 
