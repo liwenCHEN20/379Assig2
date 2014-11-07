@@ -13,7 +13,7 @@
 static sem_t* mutex;
 
 logger* init_logger(char * file){
-	validate_log_path(file);
+ 	validate_log_path(file);
 	mutex = sem_open("logger_mutex1", O_CREAT, 0600, 1);
 	logger* logStr = (logger*)malloc(sizeof(logger));
 	logStr->filepath = file;
@@ -29,8 +29,8 @@ void validate_log_path(char * file){
 
 int is_valid_log_path(char *file){
 		char * pch;
-		char directory[strlen(file)];
-
+		char directory[strlen(file)+1];
+		memset(directory, 0, strlen(file)+1);
 		pch = strrchr(file, '/');
 		strncpy(directory, file, pch-file+1);
 		DIR *d = opendir(directory);
@@ -42,7 +42,6 @@ int is_valid_log_path(char *file){
 }
 
 void write_log(logger * logWirter, char * req, char * clientAddr, char * resp){
-	//Implement the log writing
 	sem_t* sem = sem_open("logger_mutex1", O_RDWR);
 	sem_wait(sem);
 	time_t t;
